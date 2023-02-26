@@ -1,6 +1,6 @@
 // Imports
 import dotenv from 'dotenv'; dotenv.config();
-import { ChatGPTAPIBrowser } from 'chatgpt';
+import { ChatGPTAPI } from 'chatgpt';
 import { Client, GatewayIntentBits, REST, Routes, Partials, ActivityType } from 'discord.js';
 import axios from 'axios';
 import chalk from 'chalk';
@@ -35,44 +35,25 @@ async function initOpenAI() {
     const loginType = process.env.LOGIN_TYPE;
     const accountType = process.env.ACCOUNT_TYPE;
 
-    if (loginType === 'openai' && accountType === 'free') {
-        const api = new ChatGPTAPIBrowser({
-            email: process.env.EMAIL,
-            password: process.env.PASSWORD,
-            debug: process.env.DEBUG
-        });
-        await api.initSession();
-        return api;
-    }
-    else if (loginType === 'google' && accountType === 'free') {
-        const api = new ChatGPTAPIBrowser({
-            email: process.env.EMAIL,
-            password: process.env.PASSWORD,
-            isGoogleLogin: true,
-            debug: process.env.DEBUG
-        });
-        await api.initSession();
-        return api;
-    }
-    else if (loginType === 'openai' && accountType === 'pro') {
-        const api = new ChatGPTAPIBrowser({
-            email: process.env.EMAIL,
-            password: process.env.PASSWORD,
-            isProAccount: true,
-            debug: process.env.DEBUG
-        });
-        await api.initSession();
-        return api;
-    }
-    else if (loginType === 'google' && accountType === 'pro') {
-        const api = new ChatGPTAPIBrowser({
-            email: process.env.EMAIL,
-            password: process.env.PASSWORD,
-            isGoogleLogin: true,
-            isProAccount: true,
-            debug: process.env.DEBUG
-        });
-        await api.initSession();
+   if (loginType === 'openai-key' && accountType === 'pro') {
+        console.log('openai-key+pro')
+        console.log(process.env.KEY)
+        console.log('----------------')
+        // const api = new new ChatGPTAPI({
+        //     apiKey: process.env.KEY,
+        //     debug: true,
+        // })
+        // console.log('----------------')
+        // console.log({api})
+        // await api.initSession()
+
+        const api = new ChatGPTAPI({
+            apiKey: process.env.KEY,
+            debug: true,
+        })
+        
+          const res = await api.sendMessage('Hello World!')
+          console.log(res.text)
         return api;
     }
     else {
@@ -174,13 +155,15 @@ async function main() {
         try {
             await interaction.reply({ content: `${client.user.username} Is Processing Your Question...` });
             askQuestion(question, interaction, async (content) => {
-                console.log("Response    : " + content.response);
+                console.log("Response    : " + content.text);
                 console.log("---------------End---------------");
-                if (content.response.length >= process.env.DISCORD_MAX_RESPONSE_LENGTH) {
+            
+                console.log(content)
+                if (content.text.length >= process.env.DISCORD_MAX_RESPONSE_LENGTH) {
                     await interaction.editReply({ content: "The answer to this question is very long, so I'll answer by DM." });
-                    splitAndSendResponse(content.response, interaction.user);
+                    splitAndSendResponse(content.text, interaction.user);
                 } else {
-                    await interaction.editReply(`**${interaction.user.tag}:** ${question}\n**${client.user.username}:** ${content.response}\n</>`);
+                    await interaction.editReply(`**${interaction.user.tag}:** ${question}\n**${client.user.username}:** ${content.text}\n</>`);
                 }
                 client.user.setActivity('/ask');
                 // TODO: send to DB
